@@ -1,0 +1,4 @@
+project_name: manager.io
+release_type: stable
+release_tag: latest
+ls_branch: main
