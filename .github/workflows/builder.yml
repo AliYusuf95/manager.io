@@ -1,0 +1,106 @@
+name: Builder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4.1.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Get Latest Release Tag
+        id: tag
+        run: |
+          LATEST_RELEASE_TAG=$(curl -sL https://api.github.com/repos/Manager-io/Manager/releases/latest | jq -r '.tag_name')
+          echo "Latest Release Tag: $LATEST_RELEASE_TAG"
+          RELEASE_TAG=$(echo "${LATEST_RELEASE_TAG}" | sed 's/[~,%@+;:/ ]//g')
+          echo "Sanitized Release Tag: $RELEASE_TAG"
+          echo "LATEST_RELEASE_TAG=$LATEST_RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME=${REPO,,}" >> ${GITHUB_ENV}
+
+          HAS_PREVIOUS_RELEASE=$(curl -sL "https://api.github.com/repos/${REPO}/releases" | jq -r '.[0].tag_name // ""')
+
+          if [[ -z "$HAS_PREVIOUS_RELEASE" ]]; then
+            # No previous release, include all changes
+            echo "New build, include all changes"
+            CHANGES=$(curl -sL https://api.github.com/repos/Manager-io/Manager/releases | jq -r '.[].body | select(. != "no message #")' | tr '\n' '\0' | sort -u | tr '\0' '\n')
+          else
+            PREVIOUS_RELEASE=$(echo "${HAS_PREVIOUS_RELEASE}" | sed 's/[v~,%@+;:/ ]//g')
+            # Include changes since last release
+            echo "Include changes from $PREVIOUS_RELEASE"
+            CHANGES=$(curl -sL https://api.github.com/repos/Manager-io/Manager/releases |
+              jq --arg v "$PREVIOUS_RELEASE" -r 'def parse($i): $i | [sub("(?<a>[0-9]+).(?<b>[0-9]+).(?<c>[0-9]+).(?<d>[0-9]+)"; "\(.a)", "\(.b)", "\(.c)", "\(.d)")] | map(tonumber); .[] | select(parse(.tag_name) > parse($v)) | .body | select(. != "no message #")' |
+              tr '\n' '\0' | sort -u | tr '\0' '\n')
+          fi
+
+          echo "CHANGES: $CHANGES"
+          echo "CHANGES=$CHANGES" >> ${GITHUB_ENV}
+        env:
+          REPO: ${{ github.repository }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}
+          tags: |
+            type=schedule
+            type=sha,prefix={{branch}}-
+            type=pep440,pattern={{version}},value=${{ steps.tag.outputs.RELEASE_TAG }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Manager.io
+            org.opencontainers.image.url=https://github.com/${{ env.IMAGE_NAME }}/packages
+            org.opencontainers.image.authors=aliyusuf.com
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image with built package
+        uses: docker/build-push-action@v4
+        with:
+          platforms: linux/amd64
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          outputs: type=oci,dest=/tmp/image.tar
+          build-args: MANAGER_VERSION=${{ steps.tag.outputs.LATEST_RELEASE_TAG }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "v${{ steps.tag.outputs.RELEASE_TAG }}"
+          name: "Release for Manager.io version ${{ steps.tag.outputs.RELEASE_TAG }}"
+          body: |
+            Updating manager to ${{ steps.tag.outputs.RELEASE_TAG }}
+
+            **Changes**
+
+            ${{ env.CHANGES }}
+
+          draft: false
+          prerelease: false
+          allowUpdates: true
