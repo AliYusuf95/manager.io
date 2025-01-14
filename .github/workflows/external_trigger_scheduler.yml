@@ -1,0 +1,46 @@
+name: External Trigger Scheduler
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  external-trigger-scheduler:
+    runs-on: ubuntu-latest
+    env:
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Loop through branches
+        run: |
+          printf "# External trigger scheduler for ${REPO}\n\n" >> $GITHUB_STEP_SUMMARY
+          printf "Found the branches:\n\n%s\n" "$(git for-each-ref --format='- %(refname:lstrip=3)' refs/remotes)" >> $GITHUB_STEP_SUMMARY
+          for branch in $(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes); do
+            if [[ "$branch" == "HEAD" ]]; then
+              echo "Skipping HEAD branch." >> $GITHUB_STEP_SUMMARY
+              continue
+            fi
+
+            ls_branch=$(curl -sSL "https://raw.githubusercontent.com/${REPO}/$branch/vars.yml" | yq -r '.ls_branch')
+
+            if [[ "$branch" == "$ls_branch" ]]; then
+              echo "Branch $branch appears to be live; checking workflow." >> $GITHUB_STEP_SUMMARY
+              if [[ $(curl -sSLX GET "https://api.github.com/repos/${REPO}/actions/workflows/external_trigger.yml" > /dev/null 2>&1; echo $?) == 0 ]]; then
+                echo "Triggering external trigger workflow for branch $branch." >> $GITHUB_STEP_SUMMARY
+                curl -iX POST \
+                  -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                  -H "Accept: application/vnd.github.v3+json" \
+                  -d "{\"ref\":\"refs/heads/${branch}\"}" \
+                  "https://api.github.com/repos/${REPO}/actions/workflows/external_trigger.yml/dispatches"
+              else
+                echo "Skipping branch due to no external trigger workflow present." >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "Skipping branch $branch due to being detected as dev branch or having no external version." >> $GITHUB_STEP_SUMMARY
+            fi
+          done
