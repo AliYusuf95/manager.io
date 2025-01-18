@@ -13,7 +13,7 @@ The data is stored on a external volume "/data"
 #### Simple run:
 
 ```
-$ docker run -d ghcr.io/aliyusuf/manager.io
+$ docker run -d ghcr.io/aliyusuf95/manager.io
 ```
 
 #### Preferred way to run:
@@ -24,13 +24,13 @@ $ docker run -d \
   -p 8080:8080 \
   -v /path/to/my/data:/data \
   --restart=unless-stopped \
-  ghcr.io/aliyusuf/manager.io:latest
+  ghcr.io/aliyusuf95/manager.io:latest
 ```
 
 ```yaml
 services:
   manager:
-    image: ghcr.io/aliyusuf/manager.io:latest
+    image: ghcr.io/aliyusuf95/manager.io:latest
     container_name: manager
     ports:
       # host:container
@@ -57,7 +57,7 @@ Open the business name -> click Backup
 ```
 $ docker stop Manager
 $ docker rm Manager
-$ docker pull ghcr.io/aliyusuf/manager.io:latest
+$ docker pull ghcr.io/aliyusuf95/manager.io:latest
 $ docker run -d ... (Preferred way to run)
 ```
 
@@ -76,7 +76,7 @@ $ docker run -d \
   -v /path/to/my/data:/data \
   --restart=unless-stopped \
   --label=com.centurylinklabs.watchtower.enable=true \
-  ghcr.io/aliyusuf/manager.io:latest
+  ghcr.io/aliyusuf95/manager.io:latest
 ```
 
 and then start an updater container which will only update your Manager container, every time new version is released
