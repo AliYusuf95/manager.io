@@ -1,0 +1,36 @@
+name: Update Docker Hub Description
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - README.md
+      - .github/workflows/dockerhub-description.yml
+  release:
+    types: [published, released]
+jobs:
+  dockerHubDescription:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Repo Meta
+        id: meta
+        run: |
+          # convert to lowercase
+          REPO=${REPO,,}
+          REPO_NAME=${REPO##*/}
+          echo "REPO_NAME=$REPO_NAME"
+          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_OUTPUT
+        env:
+          REPO: ${{ github.repository }}
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ steps.meta.outputs.REPO_NAME }}
+          short-description: ${{ github.event.repository.description }}
+          enable-url-completion: true
