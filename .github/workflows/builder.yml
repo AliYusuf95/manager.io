@@ -104,7 +104,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: "v${{ steps.tag.outputs.RELEASE_TAG }}"
-          name: "Release for Manager.io version ${{ steps.tag.outputs.RELEASE_TAG }}"
+          name: ${{ steps.tag.outputs.RELEASE_TAG }}
           body: |
             Updating manager to ${{ steps.tag.outputs.RELEASE_TAG }}
 
