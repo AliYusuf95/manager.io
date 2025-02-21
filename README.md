@@ -2,11 +2,16 @@
 
 Manager is free accounting software for small business. Updated periodically using github actions
 
+## Image
+
+- **Docker Hub:** [aliyusuf/manager.io](https://hub.docker.com/repository/docker/aliyusuf/manager.io)
+- **GitHub Registry (ghcr.io):** [ghcr.io/aliyusuf95/manager.io](https://github.com/AliYusuf95/manager.io/pkgs/container/manager.io)
+
 ## APP
 
-Dockerized https://www.manager.io
+Dockerized [manager.io](https://www.manager.io) server edition from the offical manager.io [repository](https://github.com/Manager-io/Manager)
 
-The data is stored on a external volume "/data"
+The data is stored on a external volume `/data`
 
 ## RUNNING
 
@@ -67,7 +72,7 @@ Running docker prefered way, all files should already be in place. If not, resto
 
 <Warning>Use this on your own risk!</Warning>
 
-Add "--label=com.centurylinklabs.watchtower.enable=true" to run arguments of your manager like this:
+Add `--label=com.centurylinklabs.watchtower.enable=true` to run arguments of your manager like this:
 
 ```
 $ docker run -d \
