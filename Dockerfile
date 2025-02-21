@@ -19,8 +19,10 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
 ARG MANAGER_VERSION
 LABEL build_version="version:- ${MANAGER_VERSION}"
 
-RUN apt-get update \
-    && apt-get install -y curl
+RUN apt update; \
+    apt install -y curl; \
+    apt clean; \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/manager-server
 
