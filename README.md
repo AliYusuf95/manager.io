@@ -4,7 +4,7 @@ Manager is free accounting software for small business. Updated periodically usi
 
 ## Image
 
-- **Docker Hub:** [aliyusuf/manager.io](https://hub.docker.com/repository/docker/aliyusuf/manager.io)
+- **Docker Hub:** [aliyusuf/manager.io](https://hub.docker.com/r/aliyusuf/manager.io)
 - **GitHub Registry (ghcr.io):** [ghcr.io/aliyusuf95/manager.io](https://github.com/AliYusuf95/manager.io/pkgs/container/manager.io)
 
 ## APP
