@@ -7,7 +7,7 @@ ARG TARGETPLATFORM
 RUN apk --no-cache add curl
 
 # Download and extract ManagerServer binary
-RUN if [ "$TARGETPLATFORM" = "linux/arm64 " ] ; then TARGET=arm64; else TARGET=x64 ; fi; \
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] ; then TARGET=arm64; else TARGET=x64 ; fi; \
     echo "https://github.com/Manager-io/Manager/releases/download/${MANAGER_VERSION}/ManagerServer-linux-${TARGET}.tar.gz"; \
     curl -L "https://github.com/Manager-io/Manager/releases/download/${MANAGER_VERSION}/ManagerServer-linux-${TARGET}.tar.gz" --output /tmp/manager-server.tar.gz; \
     mkdir /tmp/manager-server/; \
