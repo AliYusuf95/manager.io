@@ -27,7 +27,7 @@ RUN apt update; \
 WORKDIR /opt/manager-server
 
 # Copy the extracted binary
-COPY --from=build /tmp/manager-server/* .
+COPY --from=build /tmp/manager-server/ .
 
 # Set permissions for ManagerServer executable
 RUN chmod +x /opt/manager-server/ManagerServer
