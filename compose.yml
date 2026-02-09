@@ -3,6 +3,6 @@ services:
     build:
       context: .
       args:
-        MANAGER_VERSION: 25.1.9.2022
+        MANAGER_VERSION: 26.1.21.3171
     ports:
       - 8085:8080

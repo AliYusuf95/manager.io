@@ -19,8 +19,11 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
 ARG MANAGER_VERSION
 LABEL build_version="version:- ${MANAGER_VERSION}"
 
+# Use wrapper for Puppeteer
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/local/bin/chromium-wrapper
+
 RUN apt update; \
-    apt install -y curl; \
+    apt install -y curl chromium; \
     apt clean; \
     rm -rf /var/lib/apt/lists/*
 
@@ -29,8 +32,11 @@ WORKDIR /opt/manager-server
 # Copy the extracted binary
 COPY --from=build /tmp/manager-server/ .
 
+# Copy local chromium wrapper into the image
+COPY chromium-wrapper /usr/local/bin/chromium-wrapper
+
 # Set permissions for ManagerServer executable
-RUN chmod +x /opt/manager-server/ManagerServer
+RUN chmod +x /opt/manager-server/ManagerServer /usr/local/bin/chromium-wrapper
 
 # Define HEALTHCHECK for liveness probe
 HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
