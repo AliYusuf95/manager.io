@@ -68,7 +68,11 @@ jobs:
           fi
 
           echo "CHANGES: $CHANGES"
-          echo "CHANGES=$CHANGES" >> ${GITHUB_ENV}
+          {
+            echo "CHANGES<<EOF"
+            echo "$CHANGES"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
         env:
           REPO: ${{ github.repository }}
 
